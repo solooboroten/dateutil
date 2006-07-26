@@ -2,13 +2,14 @@
 
 Name:           python-dateutil
 Version:        1.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python Software Foundation License
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.bz2
+Patch0:         python-dateutil-1.1-x86_64.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
@@ -20,6 +21,7 @@ module available in Python 2.3+.
 
 %prep
 %setup -q
+%patch -p1
 
 
 %build
@@ -41,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/dateutil/
 
 %changelog
+* Wed Jul 26 2006 Orion Poplawski <orion@cora.nwra.com> 1.1-3
+- Add patch to fix building on x86_64
+
 * Wed Feb 15 2006 Orion Poplawski <orion@cora.nwra.com> 1.1-2
 - Rebuild for gcc/glibc changes
 
