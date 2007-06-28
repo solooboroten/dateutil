@@ -1,8 +1,8 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           python-dateutil
-Version:        1.1
-Release:        3%{?dist}
+Version:        1.2
+Release:        1%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -43,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/dateutil/
 
 %changelog
+* Thu Jun 28 2007 Orion Poplawski <orion@cora.nwra.com> 1.2-1
+- Update to 1.2
+
 * Wed Jul 26 2006 Orion Poplawski <orion@cora.nwra.com> 1.1-3
 - Add patch to fix building on x86_64
 
