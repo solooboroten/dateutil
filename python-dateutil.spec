@@ -2,7 +2,7 @@
 
 Name:           python-dateutil
 Version:        1.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -41,8 +41,12 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %doc example.py LICENSE NEWS README
 %{python_sitelib}/dateutil/
+%{python_sitelib}/*.egg-info
 
 %changelog
+* Fri Jan 04 2008 Jef Spaleta <jspaleta@fedoraproject.org> 1.2-2
+- Fix for egg-info file creation
+
 * Thu Jun 28 2007 Orion Poplawski <orion@cora.nwra.com> 1.2-1
 - Update to 1.2
 
