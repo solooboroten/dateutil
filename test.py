@@ -1,6 +1,9 @@
 #!/usr/bin/python
-import unittest
+# -*- encoding: utf-8 -*-
 from cStringIO import StringIO
+import unittest
+import calendar
+import time
 import base64
 import os
 
@@ -21,8 +24,6 @@ from dateutil import zoneinfo
 
 from datetime import *
 
-import calendar
-import time
 
 class RelativeDeltaTest(unittest.TestCase):
     now = datetime(2003, 9, 17, 20, 54, 47, 282310)
@@ -2949,6 +2950,7 @@ class RRuleTest(unittest.TestCase):
 
 
 class ParserTest(unittest.TestCase):
+
     def setUp(self):
         self.tzinfos = {"BRST": -10800}
         self.brsttz = tzoffset("BRST", -10800)
@@ -3548,6 +3550,38 @@ class ParserTest(unittest.TestCase):
             self.assertEqual(parse(dt.isoformat()), dt)
             dt += delta
 
+    def testMicrosecondsPrecisionError(self):
+        # Skip found out that sad precision problem. :-(
+        dt1 = parse("00:11:25.01")
+        dt2 = parse("00:12:10.01")
+        self.assertEquals(dt1.microsecond, 10000)
+        self.assertEquals(dt2.microsecond, 10000)
+
+    def testMicrosecondPrecisionErrorReturns(self):
+        # One more precision issue, discovered by Eric Brown.  This should
+        # be the last one, as we're no longer using floating points.
+        for ms in [100001, 100000, 99999, 99998,
+                    10001,  10000,  9999,  9998,
+                     1001,   1000,   999,   998,
+                      101,    100,    99,    98]:
+            dt = datetime(2008, 2, 27, 21, 26, 1, ms)
+            self.assertEquals(parse(dt.isoformat()), dt)
+
+    def testHighPrecisionSeconds(self):
+        self.assertEquals(parse("20080227T21:26:01.123456789"),
+                          datetime(2008, 2, 27, 21, 26, 1, 123456))
+
+    def testCustomParserInfo(self):
+        # Custom parser info wasn't working, as Michael Elsdörfer discovered.
+        from dateutil.parser import parserinfo, parser
+        class myparserinfo(parserinfo):
+            MONTHS = parserinfo.MONTHS[:]
+            MONTHS[0] = ("Foo", "Foo")
+        myparser = parser(myparserinfo())
+        dt = myparser.parse("01/Foo/2007")
+        self.assertEquals(dt, datetime(2007, 1, 1))
+
+
 class EasterTest(unittest.TestCase):
     easterlist = [
                  # WESTERN            ORTHODOX
@@ -3837,11 +3871,20 @@ END:VTIMEZONE
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
         self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
-        
+
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
         self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
         self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+
+    def testZoneInfoOffsetSignal(self):
+        utc = gettz("UTC")
+        nyc = zoneinfo.gettz("America/New_York")
+        t0 = datetime(2007,11,4,0,30, tzinfo=nyc)
+        t1 = t0.astimezone(utc)
+        t2 = t1.astimezone(nyc)
+        self.assertEquals(t0, t2)
+        self.assertEquals(nyc.dst(t0), timedelta(hours=1))
 
     def testICalStart1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
@@ -3864,6 +3907,29 @@ END:VTIMEZONE
         # Eugene Oden notified about the issue.
         tz = tzfile(StringIO(base64.decodestring(self.NEW_YORK)))
         self.assertEquals(datetime(2007,3,31,20,12).tzname(), None)
+
+    def testBrokenIsDstHandling(self):
+        # tzrange._isdst() was using a date() rather than a datetime().
+        # Issue reported by Lennart Regebro.
+        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
+        self.assertEquals(dt.astimezone(tz=gettz("GMT+2")),
+                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
+
+    def testGMTHasNoDaylight(self):
+        # tzstr("GMT+2") improperly considered daylight saving time.
+        # Issue reported by Lennart Regebro.
+        dt = datetime(2007,8,6,4,10)
+        self.assertEquals(gettz("GMT+2").dst(dt), timedelta(0))
+
+    def testGMTOffset(self):
+        # GMT and UTC offsets have inverted signal when compared to the
+        # usual TZ variable handling.
+        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
+        self.assertEquals(dt.astimezone(tz=tzstr("GMT+2")),
+                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
+        self.assertEquals(dt.astimezone(tz=gettz("UTC-2")),
+                          datetime(2007,8,6,2,10, tzinfo=tzstr("UTC-2")))
+
 
 if __name__ == "__main__":
 	unittest.main()
