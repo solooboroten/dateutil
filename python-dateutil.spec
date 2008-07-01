@@ -1,19 +1,18 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           python-dateutil
-Version:        1.2
-Release:        2%{?dist}
+Version:        1.4
+Release:        1%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python Software Foundation License
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.bz2
-Patch0:         python-dateutil-1.1-x86_64.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
-BuildRequires:  python-devel
+BuildRequires:  python-devel,python-setuptools
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -21,7 +20,6 @@ module available in Python 2.3+.
 
 %prep
 %setup -q
-%patch -p1
 
 
 %build
@@ -44,6 +42,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Tue Jul 01 2008 Jef Spaleta <jspaleta AT fedoraproject DOT org> 1.4-1
+- Latest upstream release 
+
 * Fri Jan 04 2008 Jef Spaleta <jspaleta@fedoraproject.org> 1.2-2
 - Fix for egg-info file creation
 
