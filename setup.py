@@ -28,6 +28,6 @@ The dateutil module provides powerful extensions to the standard
 datetime module, available in Python 2.3+.
 """,
       packages = ["dateutil", "dateutil.zoneinfo"],
-      package_data={"": ["*.tar.bz2"]},
+      package_data={"": ["*.tar.gz"]},
       include_package_data=True,
       )
