@@ -2,11 +2,11 @@
 
 Name:           python-dateutil
 Version:        1.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
-License:        Python Software Foundation License
+License:        Python
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -42,6 +42,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Fri Aug 29 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.4-2
+- fix license tag
+
 * Tue Jul 01 2008 Jef Spaleta <jspaleta AT fedoraproject DOT org> 1.4-1
 - Latest upstream release 
 
