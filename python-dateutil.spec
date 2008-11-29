@@ -2,7 +2,7 @@
 
 Name:           python-dateutil
 Version:        1.4
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -42,6 +42,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Sat Nov 29 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 1.4-3
+- Rebuild for Python 2.6
+
 * Fri Aug 29 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.4-2
 - fix license tag
 
