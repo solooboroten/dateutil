@@ -1,14 +1,14 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           python-dateutil
-Version:        1.4
+Version:        1.4.1
 Release:        2%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            http://labix.org/python-dateutil
-Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.bz2
+Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
@@ -42,6 +42,15 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Fri Feb 20 2009 Jef Spaleta <jspaleta AT fedoraproject DOT org> - 1.4.1-2
+- small specfile fix
+
+* Fri Feb 20 2009 Jef Spaleta <jspaleta AT fedoraproject DOT org> - 1.4.1-2
+- New upstream version
+
+* Sat Nov 29 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 1.4-3
+- Rebuild for Python 2.6
+
 * Fri Aug 29 2008 Tom "spot" Callaway <tcallawa@redhat.com> - 1.4-2
 - fix license tag
 
