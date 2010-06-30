@@ -1,4 +1,6 @@
-%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%if 0%{?fedora} < 13 && 0%{?rhel} < 6
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%endif
 
 Name:           python-dateutil
 Version:        1.4.1
@@ -21,6 +23,8 @@ module available in Python 2.3+.
 %prep
 %setup -q
 
+# Reencode this as utf8
+iconv -f ISO-8859-1 -t utf8 NEWS
 
 %build
 %{__python} setup.py build
@@ -28,7 +32,7 @@ module available in Python 2.3+.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__python} setup.py install -O1 --skip-build --root $RPM_BUILD_ROOT
+%{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
 
  
 %clean
