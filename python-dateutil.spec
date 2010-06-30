@@ -23,6 +23,8 @@ module available in Python 2.3+.
 %prep
 %setup -q
 
+# Reencode this as utf8
+iconv -f ISO-8859-1 -t utf8 NEWS
 
 %build
 %{__python} setup.py build
