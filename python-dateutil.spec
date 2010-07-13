@@ -2,7 +2,7 @@
 
 Name:           python-dateutil
 Version:        1.4.1
-Release:        4%{?dist}
+Release:        6%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -11,8 +11,15 @@ URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+# Redirect the exposed parts of the dateutil.zoneinfo API to remove references
+# to the embedded copy of zoneinfo-2008e.tar.gz and instead use the system
+# data from the "tzdata" package (rhbz#559309):
+Patch0:         python-dateutil-1.4.1-remove-embedded-timezone-data.patch
+
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
+
+Requires:       tzdata
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -21,6 +28,14 @@ module available in Python 2.3+.
 %prep
 %setup -q
 
+# Remove embedded copy of timezone data:
+%patch0 -p1
+rm dateutil/zoneinfo/zoneinfo-2008e.tar.gz
+
+# Change encoding of NEWS file to UTF-8, preserving timestamp:
+iconv -f ISO-8859-1 -t utf8 NEWS > NEWS.utf8 && \
+  touch -r NEWS NEWS.utf8 && \
+  mv NEWS.utf8 NEWS
 
 %build
 %{__python} setup.py build
@@ -34,6 +49,8 @@ rm -rf $RPM_BUILD_ROOT
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%check
+%{__python} test.py
 
 %files
 %defattr(-,root,root,-)
@@ -42,6 +59,20 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Tue Jul 13 2010 David Malcolm <dmalcolm@redhat.com> - 1.4.1-6
+- remove embedded copy of timezone data, and redirect the dateutil.zoneinfo
+API accordingly
+Resolves: rhbz#559309
+- add a %%check, running the upstream selftest suite
+
+* Tue Jul 13 2010 David Malcolm <dmalcolm@redhat.com> - 1.4.1-5
+- add requirement on tzdata
+Resolves: rhbz#559309
+- fix encoding of the NEWS file
+
+* Mon Nov 30 2009 Dennis Gregorovic <dgregor@redhat.com> - 1.4.1-4.1
+- Rebuilt for RHEL 6
+
 * Sun Jul 26 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.1-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
 
