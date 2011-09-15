@@ -5,7 +5,7 @@ diff -up python-dateutil-1.5/dateutil/zoneinfo/__init__.py\~ python-dateutil-1.5
  
  CACHE = []
  CACHESIZE = 10
-+USE_SYSTEM_ZONEINFO = False # XXX configure at build time
++USE_SYSTEM_ZONEINFO = True # XXX configure at build time
  
  class tzfile(tzfile):
      def __reduce__(self):
