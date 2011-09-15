@@ -1,12 +1,13 @@
 Name:           python-dateutil
 Version:        1.5
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/%{name}/%{name}-%{version}.tar.gz
+Patch0:		python-dateutil-1.5-system-zoneinfo.patch
 
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
@@ -17,6 +18,7 @@ module available in Python 2.3+.
 
 %prep
 %setup -q
+%patch0 -p1
 
 iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
@@ -30,9 +32,13 @@ mv NEWS.new NEWS
 %files
 %doc example.py LICENSE NEWS README
 %{python_sitelib}/dateutil/
+%exclude %{python_sitelib}/dateutil/zoneinfo/zoneinfo-2010g.tar.gz
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-2
+- Added a patch to respect systemwide tzdata. Ref bug 729786
+
 * Wed Jul 13 2011 Rahul Sundaram <sundaram@fedoraproject.org> - 1.5-1
 - New upstream release
 - Fix UTF8 encoding correctly
