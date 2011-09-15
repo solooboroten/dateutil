@@ -1,6 +1,6 @@
 Name:           python-dateutil
 Version:        1.5
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -11,7 +11,7 @@ Patch0:		python-dateutil-1.5-system-zoneinfo.patch
 
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
-
+Requires:	tzdata
 %description
 The dateutil module provides powerful extensions to the standard datetime
 module available in Python 2.3+.
@@ -36,6 +36,9 @@ mv NEWS.new NEWS
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-3
+- Adjust patch to respect systemwide tzdata. Ref bug 729786
+
 * Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-2
 - Added a patch to respect systemwide tzdata. Ref bug 729786
 
