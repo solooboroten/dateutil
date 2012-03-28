@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # -*- encoding: utf-8 -*-
-from cStringIO import StringIO
+from __future__ import unicode_literals
+
+from six import StringIO, BytesIO, PY3
 import unittest
 import calendar
-import time
 import base64
 import os
 
@@ -11,9 +12,12 @@ import os
 if os.path.exists("build"):
 	from distutils.util import get_platform
 	import sys
-	s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+	if sys.version_info >= (3, 2):
+		s = "build/lib"
+	else:
+		s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
 	s = os.path.join(os.getcwd(), s)
-	sys.path.insert(0,s)
+	sys.path.insert(0, s)
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -96,14 +100,14 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextWenesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
                          date(2003, 9, 24))
-        
+
     def test15thISOYearWeek(self):
         self.assertEqual(date(2003, 1, 1) +
                          relativedelta(day=4, weeks=+14, weekday=MO(-1)),
                          date(2003, 4, 7))
 
     def testMillenniumAge(self):
-        self.assertEqual(relativedelta(self.now, date(2001,1,1)),
+        self.assertEqual(relativedelta(self.now, date(2001, 1, 1)),
                          relativedelta(years=+2, months=+8, days=+16,
                                        hours=+20, minutes=+54, seconds=+47,
                                        microseconds=+282310))
@@ -146,6 +150,46 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(self.today+relativedelta(yearday=261),
                          date(2003, 9, 18))
 
+    def testAddition(self):
+        self.assertEqual(relativedelta(days=10) +
+                         relativedelta(years=1, months=2, days=3, hours=4,
+                                       minutes=5, microseconds=6),
+                         relativedelta(years=1, months=2, days=13, hours=4,
+                                       minutes=5, microseconds=6))
+
+    def testAdditionToDatetime(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1),
+                         datetime(2000, 1, 2))
+
+    def testRightAdditionToDatetime(self):
+        self.assertEqual(relativedelta(days=1) + datetime(2000, 1, 1),
+                         datetime(2000, 1, 2))
+
+    def testSubtraction(self):
+        self.assertEqual(relativedelta(days=10) -
+                         relativedelta(years=1, months=2, days=3, hours=4,
+                                       minutes=5, microseconds=6),
+                         relativedelta(years=-1, months=-2, days=7, hours=-4,
+                                       minutes=-5, microseconds=-6))
+
+    def testRightSubtractionFromDatetime(self):
+        self.assertEqual(datetime(2000, 1, 2) - relativedelta(days=1),
+                         datetime(2000, 1, 1))
+
+    def testSubractionWithDatetime(self):
+        self.assertRaises(TypeError, lambda x, y: x - y,
+                          (relativedelta(days=1), datetime(2000, 1, 1)))
+
+    def testMultiplication(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1) * 28,
+                         datetime(2000, 1, 29))
+        self.assertEqual(datetime(2000, 1, 1) + 28 * relativedelta(days=1),
+                         datetime(2000, 1, 29))
+
+    def testDivision(self):
+        self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
+                         datetime(2000, 1, 2))
+
 class RRuleTest(unittest.TestCase):
 
     def testYearly(self):
@@ -177,7 +221,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonth(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 2, 9, 0),
                           datetime(1998, 3, 2, 9, 0),
@@ -186,7 +230,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 10, 1, 9, 0),
@@ -195,8 +239,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 9, 0),
                           datetime(1998, 1, 7, 9, 0),
@@ -205,7 +249,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -214,7 +258,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByNWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 25, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -223,7 +267,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByNWeekDayLarge(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byweekday=(TU(3),TH(-3)),
+                              byweekday=(TU(3), TH(-3)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 11, 9, 0),
                           datetime(1998, 1, 20, 9, 0),
@@ -232,8 +276,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -242,8 +286,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 29, 9, 0),
@@ -254,8 +298,8 @@ class RRuleTest(unittest.TestCase):
         # the TU(3).
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(3),TH(-3)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(3), TH(-3)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 15, 9, 0),
                           datetime(1998, 1, 20, 9, 0),
@@ -264,8 +308,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 2, 3, 9, 0),
@@ -274,9 +318,9 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 3, 3, 9, 0),
@@ -285,7 +329,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByYearDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -295,7 +339,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByYearDayNeg(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -305,8 +349,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -316,8 +360,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -404,20 +448,10 @@ class RRuleTest(unittest.TestCase):
                           datetime(2004, 12, 27, 9, 0),
                           datetime(2009, 12, 28, 9, 0)])
 
-    def testYearlyByWeekNoAndWeekDay53(self):
-        self.assertEqual(list(rrule(YEARLY,
-                              count=3,
-                              byweekno=53,
-                              byweekday=MO,
-                              dtstart=parse("19970902T090000"))),
-                         [datetime(1998, 12, 28, 9, 0),
-                          datetime(2004, 12, 27, 9, 0),
-                          datetime(2009, 12, 28, 9, 0)])
-
     def testYearlyByHour(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1998, 9, 2, 6, 0),
@@ -426,7 +460,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMinute(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -435,7 +469,7 @@ class RRuleTest(unittest.TestCase):
     def testYearlyBySecond(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -444,8 +478,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByHourAndMinute(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -454,8 +488,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByHourAndSecond(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -464,8 +498,8 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -474,9 +508,9 @@ class RRuleTest(unittest.TestCase):
     def testYearlyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -486,8 +520,8 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
                               bymonthday=15,
-                              byhour=(6,18),
-                              bysetpos=(3,-3),
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 11, 15, 18, 0),
                           datetime(1998, 2, 15, 6, 0),
@@ -522,7 +556,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonth(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 2, 9, 0),
                           datetime(1998, 3, 2, 9, 0),
@@ -532,7 +566,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 10, 1, 9, 0),
@@ -541,8 +575,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 9, 0),
                           datetime(1998, 1, 7, 9, 0),
@@ -551,7 +585,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -560,7 +594,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByNWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 25, 9, 0),
@@ -569,7 +603,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByNWeekDayLarge(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byweekday=(TU(3),TH(-3)),
+                              byweekday=(TU(3), TH(-3)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 11, 9, 0),
                           datetime(1997, 9, 16, 9, 0),
@@ -578,8 +612,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -588,8 +622,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 29, 9, 0),
@@ -598,8 +632,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndNWeekDayLarge(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(3),TH(-3)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(3), TH(-3)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 15, 9, 0),
                           datetime(1998, 1, 20, 9, 0),
@@ -608,8 +642,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 2, 3, 9, 0),
@@ -618,9 +652,9 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 3, 3, 9, 0),
@@ -629,7 +663,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByYearDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -639,7 +673,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByYearDayNeg(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -649,8 +683,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -660,8 +694,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -752,7 +786,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByHour(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 10, 2, 6, 0),
@@ -761,7 +795,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMinute(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -770,7 +804,7 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyBySecond(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -779,8 +813,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByHourAndMinute(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -789,8 +823,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByHourAndSecond(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -799,8 +833,8 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -809,9 +843,9 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -820,9 +854,9 @@ class RRuleTest(unittest.TestCase):
     def testMonthlyBySetPos(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
-                              bymonthday=(13,17),
-                              byhour=(6,18),
-                              bysetpos=(3,-3),
+                              bymonthday=(13, 17),
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 13, 18, 0),
                           datetime(1997, 9, 17, 6, 0),
@@ -857,7 +891,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonth(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 6, 9, 0),
                           datetime(1998, 1, 13, 9, 0),
@@ -866,7 +900,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 10, 1, 9, 0),
@@ -875,8 +909,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 9, 0),
                           datetime(1998, 1, 7, 9, 0),
@@ -885,7 +919,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByWeekDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -894,7 +928,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByNWeekDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -906,8 +940,8 @@ class RRuleTest(unittest.TestCase):
         # valid recurrence.
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -916,8 +950,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -926,8 +960,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 2, 3, 9, 0),
@@ -936,9 +970,9 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 3, 3, 9, 0),
@@ -947,7 +981,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByYearDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -957,7 +991,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByYearDayNeg(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -967,8 +1001,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=4,
-                              bymonth=(1,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(1, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -978,8 +1012,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=4,
-                              bymonth=(1,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(1, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -1069,7 +1103,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByHour(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 9, 9, 6, 0),
@@ -1078,7 +1112,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMinute(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -1087,7 +1121,7 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyBySecond(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -1096,8 +1130,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByHourAndMinute(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -1106,8 +1140,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByHourAndSecond(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -1116,8 +1150,8 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -1126,9 +1160,9 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -1137,9 +1171,9 @@ class RRuleTest(unittest.TestCase):
     def testWeeklyBySetPos(self):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
-                              byweekday=(TU,TH),
-                              byhour=(6,18),
-                              bysetpos=(3,-3),
+                              byweekday=(TU, TH),
+                              byhour=(6, 18),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 9, 4, 6, 0),
@@ -1174,7 +1208,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonth(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 2, 9, 0),
@@ -1183,7 +1217,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 9, 0),
                           datetime(1997, 10, 1, 9, 0),
@@ -1192,8 +1226,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 9, 0),
                           datetime(1998, 1, 7, 9, 0),
@@ -1202,7 +1236,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -1211,7 +1245,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByNWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 4, 9, 0),
@@ -1220,8 +1254,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -1230,8 +1264,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 1, 6, 9, 0),
@@ -1240,8 +1274,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 2, 3, 9, 0),
@@ -1250,9 +1284,9 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 3, 3, 9, 0),
@@ -1261,7 +1295,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByYearDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -1271,7 +1305,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByYearDayNeg(self):
         self.assertEqual(list(rrule(DAILY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 9, 0),
                           datetime(1998, 1, 1, 9, 0),
@@ -1281,8 +1315,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(DAILY,
                               count=4,
-                              bymonth=(1,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(1, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -1292,8 +1326,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(DAILY,
                               count=4,
-                              bymonth=(1,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(1, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 9, 0),
                           datetime(1998, 7, 19, 9, 0),
@@ -1383,7 +1417,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByHour(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 9, 3, 6, 0),
@@ -1392,7 +1426,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMinute(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -1401,7 +1435,7 @@ class RRuleTest(unittest.TestCase):
     def testDailyBySecond(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -1410,8 +1444,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByHourAndMinute(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -1420,8 +1454,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByHourAndSecond(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -1430,8 +1464,8 @@ class RRuleTest(unittest.TestCase):
     def testDailyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -1440,9 +1474,9 @@ class RRuleTest(unittest.TestCase):
     def testDailyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -1451,9 +1485,9 @@ class RRuleTest(unittest.TestCase):
     def testDailyBySetPos(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(15,45),
-                              bysetpos=(3,-3),
+                              byhour=(6, 18),
+                              byminute=(15, 45),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 15),
                           datetime(1997, 9, 3, 6, 45),
@@ -1488,7 +1522,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonth(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
@@ -1497,7 +1531,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 0, 0),
                           datetime(1997, 9, 3, 1, 0),
@@ -1506,8 +1540,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 0, 0),
                           datetime(1998, 1, 5, 1, 0),
@@ -1516,7 +1550,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 2, 10, 0),
@@ -1525,7 +1559,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByNWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 2, 10, 0),
@@ -1534,8 +1568,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
@@ -1544,8 +1578,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
@@ -1554,8 +1588,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
@@ -1564,9 +1598,9 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 1, 0),
@@ -1575,7 +1609,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByYearDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0),
                           datetime(1997, 12, 31, 1, 0),
@@ -1585,7 +1619,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByYearDayNeg(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0),
                           datetime(1997, 12, 31, 1, 0),
@@ -1595,8 +1629,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0),
                           datetime(1998, 4, 10, 1, 0),
@@ -1606,8 +1640,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0),
                           datetime(1998, 4, 10, 1, 0),
@@ -1693,7 +1727,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByHour(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 9, 3, 6, 0),
@@ -1702,7 +1736,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMinute(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -1711,7 +1745,7 @@ class RRuleTest(unittest.TestCase):
     def testHourlyBySecond(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -1720,8 +1754,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByHourAndMinute(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -1730,8 +1764,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByHourAndSecond(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -1740,8 +1774,8 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -1750,9 +1784,9 @@ class RRuleTest(unittest.TestCase):
     def testHourlyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -1761,9 +1795,9 @@ class RRuleTest(unittest.TestCase):
     def testHourlyBySetPos(self):
         self.assertEqual(list(rrule(HOURLY,
                               count=3,
-                              byminute=(15,45),
-                              bysecond=(15,45),
-                              bysetpos=(3,-3),
+                              byminute=(15, 45),
+                              bysecond=(15, 45),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 15, 45),
                           datetime(1997, 9, 2, 9, 45, 15),
@@ -1798,7 +1832,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonth(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
@@ -1807,7 +1841,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 0, 0),
                           datetime(1997, 9, 3, 0, 1),
@@ -1816,8 +1850,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 0, 0),
                           datetime(1998, 1, 5, 0, 1),
@@ -1826,7 +1860,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 2, 9, 1),
@@ -1835,7 +1869,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByNWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
                           datetime(1997, 9, 2, 9, 1),
@@ -1844,8 +1878,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
@@ -1854,8 +1888,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
@@ -1864,8 +1898,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
@@ -1874,9 +1908,9 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0),
                           datetime(1998, 1, 1, 0, 1),
@@ -1885,7 +1919,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByYearDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0),
                           datetime(1997, 12, 31, 0, 1),
@@ -1895,7 +1929,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByYearDayNeg(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0),
                           datetime(1997, 12, 31, 0, 1),
@@ -1905,8 +1939,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0),
                           datetime(1998, 4, 10, 0, 1),
@@ -1916,8 +1950,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0),
                           datetime(1998, 4, 10, 0, 1),
@@ -2003,7 +2037,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByHour(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0),
                           datetime(1997, 9, 2, 18, 1),
@@ -2012,7 +2046,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMinute(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6),
                           datetime(1997, 9, 2, 9, 18),
@@ -2021,7 +2055,7 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyBySecond(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -2030,8 +2064,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByHourAndMinute(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6),
                           datetime(1997, 9, 2, 18, 18),
@@ -2040,8 +2074,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByHourAndSecond(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -2050,8 +2084,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -2060,9 +2094,9 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -2071,8 +2105,8 @@ class RRuleTest(unittest.TestCase):
     def testMinutelyBySetPos(self):
         self.assertEqual(list(rrule(MINUTELY,
                               count=3,
-                              bysecond=(15,30,45),
-                              bysetpos=(3,-3),
+                              bysecond=(15, 30, 45),
+                              bysetpos=(3, -3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 15),
                           datetime(1997, 9, 2, 9, 0, 45),
@@ -2107,7 +2141,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonth(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonth=(1,3),
+                              bymonth=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
@@ -2116,7 +2150,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonthday=(1,3),
+                              bymonthday=(1, 3),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 3, 0, 0, 0),
                           datetime(1997, 9, 3, 0, 0, 1),
@@ -2125,8 +2159,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndMonthDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(5,7),
+                              bymonth=(1, 3),
+                              bymonthday=(5, 7),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 5, 0, 0, 0),
                           datetime(1998, 1, 5, 0, 0, 1),
@@ -2135,7 +2169,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byweekday=(TU,TH),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 0),
                           datetime(1997, 9, 2, 9, 0, 1),
@@ -2144,7 +2178,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByNWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byweekday=(TU(1),TH(-1)),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 0),
                           datetime(1997, 9, 2, 9, 0, 1),
@@ -2153,8 +2187,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
@@ -2163,8 +2197,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndNWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonth=(1,3),
-                              byweekday=(TU(1),TH(-1)),
+                              bymonth=(1, 3),
+                              byweekday=(TU(1), TH(-1)),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
@@ -2173,8 +2207,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
@@ -2183,9 +2217,9 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndMonthDayAndWeekDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bymonth=(1,3),
-                              bymonthday=(1,3),
-                              byweekday=(TU,TH),
+                              bymonth=(1, 3),
+                              bymonthday=(1, 3),
+                              byweekday=(TU, TH),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 1, 1, 0, 0, 0),
                           datetime(1998, 1, 1, 0, 0, 1),
@@ -2194,7 +2228,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByYearDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=4,
-                              byyearday=(1,100,200,365),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0, 0),
                           datetime(1997, 12, 31, 0, 0, 1),
@@ -2204,7 +2238,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByYearDayNeg(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=4,
-                              byyearday=(-365,-266,-166,-1),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 12, 31, 0, 0, 0),
                           datetime(1997, 12, 31, 0, 0, 1),
@@ -2214,8 +2248,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndYearDay(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(1,100,200,365),
+                              bymonth=(4, 7),
+                              byyearday=(1, 100, 200, 365),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0, 0),
                           datetime(1998, 4, 10, 0, 0, 1),
@@ -2225,8 +2259,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMonthAndYearDayNeg(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=4,
-                              bymonth=(4,7),
-                              byyearday=(-365,-266,-166,-1),
+                              bymonth=(4, 7),
+                              byyearday=(-365, -266, -166, -1),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1998, 4, 10, 0, 0, 0),
                           datetime(1998, 4, 10, 0, 0, 1),
@@ -2312,7 +2346,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByHour(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byhour=(6,18),
+                              byhour=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 0),
                           datetime(1997, 9, 2, 18, 0, 1),
@@ -2321,7 +2355,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMinute(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byminute=(6,18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 0),
                           datetime(1997, 9, 2, 9, 6, 1),
@@ -2330,7 +2364,7 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyBySecond(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              bysecond=(6,18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0, 6),
                           datetime(1997, 9, 2, 9, 0, 18),
@@ -2339,8 +2373,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByHourAndMinute(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 0),
                           datetime(1997, 9, 2, 18, 6, 1),
@@ -2349,8 +2383,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByHourAndSecond(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byhour=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 0, 6),
                           datetime(1997, 9, 2, 18, 0, 18),
@@ -2359,8 +2393,8 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByMinuteAndSecond(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 6, 6),
                           datetime(1997, 9, 2, 9, 6, 18),
@@ -2369,9 +2403,9 @@ class RRuleTest(unittest.TestCase):
     def testSecondlyByHourAndMinuteAndSecond(self):
         self.assertEqual(list(rrule(SECONDLY,
                               count=3,
-                              byhour=(6,18),
-                              byminute=(6,18),
-                              bysecond=(6,18),
+                              byhour=(6, 18),
+                              byminute=(6, 18),
+                              bysecond=(6, 18),
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 18, 6, 6),
                           datetime(1997, 9, 2, 18, 6, 18),
@@ -2387,6 +2421,27 @@ class RRuleTest(unittest.TestCase):
                          [datetime(2010, 3, 22, 12, 1),
                           datetime(2010, 3, 22, 13, 1),
                           datetime(2010, 3, 22, 14, 1)])
+
+    def testLongIntegers(self):
+        if not PY3:  # There is no longs in python3
+            self.assertEqual(list(rrule(MINUTELY,
+                                  count=long(2),
+                                  interval=long(2),
+                                  bymonth=long(2),
+                                  byweekday=long(3),
+                                  byhour=long(6),
+                                  byminute=long(6),
+                                  bysecond=long(6),
+                                  dtstart=parse("19970902T090000"))),
+                             [datetime(1998, 2, 5, 6, 6, 6),
+                              datetime(1998, 2, 12, 6, 6, 6)])
+            self.assertEqual(list(rrule(YEARLY,
+                                  count=long(2),
+                                  bymonthday=long(5),
+                                  byweekno=long(2),
+                                  dtstart=parse("19970902T090000"))),
+                             [datetime(1998, 1, 5, 9, 0),
+                              datetime(2004, 1, 5, 9, 0)])
 
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
@@ -2433,7 +2488,7 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
                               interval=2,
-                              byweekday=(TU,SU),
+                              byweekday=(TU, SU),
                               wkst=MO,
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2444,7 +2499,7 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(list(rrule(WEEKLY,
                               count=3,
                               interval=2,
-                              byweekday=(TU,SU),
+                              byweekday=(TU, SU),
                               wkst=SU,
                               dtstart=parse("19970902T090000"))),
                          [datetime(1997, 9, 2, 9, 0),
@@ -2669,7 +2724,7 @@ class RRuleTest(unittest.TestCase):
 
     def testSetExRule(self):
         set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU,TH),
+        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
                         dtstart=parse("19970902T090000")))
         set.exrule(rrule(YEARLY, count=3, byweekday=TH,
                         dtstart=parse("19970902T090000")))
@@ -2680,7 +2735,7 @@ class RRuleTest(unittest.TestCase):
 
     def testSetExDate(self):
         set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU,TH),
+        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
                         dtstart=parse("19970902T090000")))
         set.exdate(datetime(1997, 9, 4, 9))
         set.exdate(datetime(1997, 9, 11, 9))
@@ -2734,7 +2789,7 @@ class RRuleTest(unittest.TestCase):
 
     def testSetCount(self):
         set = rruleset()
-        set.rrule(rrule(YEARLY, count=6, byweekday=(TU,TH),
+        set.rrule(rrule(YEARLY, count=6, byweekday=(TU, TH),
                         dtstart=parse("19970902T090000")))
         set.exrule(rrule(YEARLY, count=3, byweekday=TH,
                         dtstart=parse("19970902T090000")))
@@ -2961,7 +3016,7 @@ class RRuleTest(unittest.TestCase):
         self.assertRaises(ValueError,
                           rrule, MONTHLY,
                                  count=1,
-                                 bysetpos=(-1,0,1),
+                                 bysetpos=(-1, 0, 1),
                                  dtstart=parse("19970902T090000"))
 
 
@@ -2979,7 +3034,7 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=self.brsttz))
 
     def testDateCommandFormatUnicode(self):
-        self.assertEqual(parse(u"Thu Sep 25 10:36:28 BRST 2003",
+        self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                tzinfos=self.tzinfos),
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
@@ -2991,6 +3046,12 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
+    def testDateCommandFormatWithLong(self):
+        if not PY3:
+            self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
+                                   tzinfos={"BRST": long(-10800)}),
+                             datetime(2003, 9, 25, 10, 36, 28,
+                                      tzinfo=self.brsttz))
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
@@ -3032,15 +3093,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("Sep 25 2003"),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip9(self):
+    def testDateCommandFormatStrip10(self):
         self.assertEqual(parse("Sep 2003", default=self.default),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip10(self):
+    def testDateCommandFormatStrip11(self):
         self.assertEqual(parse("Sep", default=self.default),
                          datetime(2003, 9, 25))
 
-    def testDateCommandFormatStrip11(self):
+    def testDateCommandFormatStrip12(self):
         self.assertEqual(parse("2003", default=self.default),
                          datetime(2003, 9, 25))
 
@@ -3241,14 +3302,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10/09/03", yearfirst=True),
                          datetime(2010, 9, 3))
 
-    def testDateWithSpace12(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
-    def testDateWithSpace13(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
     def testDateWithSpace1(self):
         self.assertEqual(parse("2003 09 25"),
                          datetime(2003, 9, 25))
@@ -3297,10 +3350,6 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("25 09 03"),
                          datetime(2003, 9, 25))
 
-    def testDateWithSpace13(self):
-        self.assertEqual(parse("25 09 03"),
-                         datetime(2003, 9, 25))
-
     def testStrangelyOrderedDate1(self):
         self.assertEqual(parse("03 25 Sep"),
                          datetime(2003, 9, 25))
@@ -3321,13 +3370,17 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10h36m28s", default=self.default),
                          datetime(2003, 9, 25, 10, 36, 28))
 
-    def testHourWithLettersStrip1(self):
+    def testHourWithLettersStrip2(self):
         self.assertEqual(parse("10h36m", default=self.default),
                          datetime(2003, 9, 25, 10, 36))
 
-    def testHourWithLettersStrip2(self):
+    def testHourWithLettersStrip3(self):
         self.assertEqual(parse("10h", default=self.default),
                          datetime(2003, 9, 25, 10))
+
+    def testHourWithLettersStrip4(self):
+        self.assertEqual(parse("10 h 36", default=self.default),
+                         datetime(2003, 9, 25, 10, 36))
 
     def testHourAmPm1(self):
         self.assertEqual(parse("10h am", default=self.default),
@@ -3570,8 +3623,8 @@ class ParserTest(unittest.TestCase):
         # Skip found out that sad precision problem. :-(
         dt1 = parse("00:11:25.01")
         dt2 = parse("00:12:10.01")
-        self.assertEquals(dt1.microsecond, 10000)
-        self.assertEquals(dt2.microsecond, 10000)
+        self.assertEqual(dt1.microsecond, 10000)
+        self.assertEqual(dt2.microsecond, 10000)
 
     def testMicrosecondPrecisionErrorReturns(self):
         # One more precision issue, discovered by Eric Brown.  This should
@@ -3581,10 +3634,10 @@ class ParserTest(unittest.TestCase):
                      1001,   1000,   999,   998,
                       101,    100,    99,    98]:
             dt = datetime(2008, 2, 27, 21, 26, 1, ms)
-            self.assertEquals(parse(dt.isoformat()), dt)
+            self.assertEqual(parse(dt.isoformat()), dt)
 
     def testHighPrecisionSeconds(self):
-        self.assertEquals(parse("20080227T21:26:01.123456789"),
+        self.assertEqual(parse("20080227T21:26:01.123456789"),
                           datetime(2008, 2, 27, 21, 26, 1, 123456))
 
     def testCustomParserInfo(self):
@@ -3595,7 +3648,7 @@ class ParserTest(unittest.TestCase):
             MONTHS[0] = ("Foo", "Foo")
         myparser = parser(myparserinfo())
         dt = myparser.parse("01/Foo/2007")
-        self.assertEquals(dt, datetime(2007, 1, 1))
+        self.assertEqual(dt, datetime(2007, 1, 1))
 
 
 class EasterTest(unittest.TestCase):
@@ -3677,7 +3730,7 @@ class EasterTest(unittest.TestCase):
 
 class TZTest(unittest.TestCase):
 
-    TZFILE_EST5EDT = """
+    TZFILE_EST5EDT = b"""
 VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAAAADrAAAABAAAABCeph5wn7rrYKCGAHCh
 ms1gomXicKOD6eCkaq5wpTWnYKZTyvCnFYlgqDOs8Kj+peCqE47wqt6H4KvzcPCsvmngrdNS8K6e
 S+CvszTwsH4t4LGcUXCyZ0pgs3wzcLRHLGC1XBVwticOYLc793C4BvBguRvZcLnm0mC7BPXwu8a0
@@ -3703,7 +3756,7 @@ AAEAAQABAAEAAQABAAEAAQABAAEAAf//x8ABAP//ubAABP//x8ABCP//x8ABDEVEVABFU1QARVdU
 AEVQVAAAAAABAAAAAQ==
     """
 
-    EUROPE_HELSINKI = """
+    EUROPE_HELSINKI = b"""
 VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAFAAAABQAAAAAAAAB1AAAABQAAAA2kc28Yy85RYMy/hdAV
 I+uQFhPckBcDzZAX876QGOOvkBnToJAaw5GQG7y9EBysrhAdnJ8QHoyQEB98gRAgbHIQIVxjECJM
 VBAjPEUQJCw2ECUcJxAmDBgQJwVDkCf1NJAo5SWQKdUWkCrFB5ArtPiQLKTpkC2U2pAuhMuQL3S8
@@ -3718,7 +3771,7 @@ BAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAMEAwQDBAME
 AwQAABdoAAAAACowAQQAABwgAAkAACowAQQAABwgAAlITVQARUVTVABFRVQAAAAAAQEAAAABAQ==
     """
 
-    NEW_YORK = """
+    NEW_YORK = b"""
 VFppZgAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAABcAAADrAAAABAAAABCeph5wn7rrYKCGAHCh
 ms1gomXicKOD6eCkaq5wpTWnYKZTyvCnFYlgqDOs8Kj+peCqE47wqt6H4KvzcPCsvmngrdNS8K6e
 S+CvszTwsH4t4LGcUXCyZ0pgs3wzcLRHLGC1XBVwticOYLc793C4BvBguRvZcLnm0mC7BPXwu8a0
@@ -3770,85 +3823,85 @@ END:VTIMEZONE
     """
 
     def testStrStart1(self):
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
 
     def testStrEnd1(self):
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr("EST5EDT")).tzname(), "EST")
 
     def testStrStart2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd2(self):
         s = "EST5EDT,4,0,6,7200,10,0,26,7200,3600"
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd3(self):
         s = "EST5EDT,4,1,0,7200,10,-1,0,7200,3600"
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd4(self):
         s = "EST5EDT4,M4.1.0/02:00:00,M10-5-0/02:00"
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart5(self):
         s = "EST5EDT4,95/02:00:00,298/02:00"
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd5(self):
         s = "EST5EDT4,95/02:00:00,298/02"
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrStart6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02:00"
-        self.assertEqual(datetime(2003,4,6,1,59,
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
                                   tzinfo=tzstr(s)).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
 
     def testStrEnd6(self):
         s = "EST5EDT4,J96/02:00:00,J299/02"
-        self.assertEqual(datetime(2003,10,26,0,59,
+        self.assertEqual(datetime(2003, 10, 26, 0, 59,
                                   tzinfo=tzstr(s)).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,
+        self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
 
     def testStrCmp1(self):
@@ -3874,77 +3927,83 @@ END:VTIMEZONE
                          tzrange("EST", -18000, "EDT"))
 
     def testFileStart1(self):
-        tz = tzfile(StringIO(base64.decodestring(self.TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
+        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
         
     def testFileEnd1(self):
-        tz = tzfile(StringIO(base64.decodestring(self.TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+        tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
 
     def testZoneInfoOffsetSignal(self):
-        utc = gettz("UTC")
+        utc = zoneinfo.gettz("UTC")
         nyc = zoneinfo.gettz("America/New_York")
-        t0 = datetime(2007,11,4,0,30, tzinfo=nyc)
+        self.assertNotEqual(utc, None)
+        self.assertNotEqual(nyc, None)
+        t0 = datetime(2007, 11, 4, 0, 30, tzinfo=nyc)
         t1 = t0.astimezone(utc)
         t2 = t1.astimezone(nyc)
-        self.assertEquals(t0, t2)
-        self.assertEquals(nyc.dst(t0), timedelta(hours=1))
+        self.assertEqual(t0, t2)
+        self.assertEqual(nyc.dst(t0), timedelta(hours=1))
 
     def testICalStart1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003,4,6,1,59,tzinfo=tz).tzname(), "EST")
-        self.assertEqual(datetime(2003,4,6,2,00,tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testICalEnd1(self):
         tz = tzical(StringIO(self.TZICAL_EST5EDT)).get()
-        self.assertEqual(datetime(2003,10,26,0,59,tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003,10,26,1,00,tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
 
     def testRoundNonFullMinutes(self):
         # This timezone has an offset of 5992 seconds in 1900-01-01.
-        tz = tzfile(StringIO(base64.decodestring(self.EUROPE_HELSINKI)))
-        self.assertEquals(str(datetime(1900,1,1,0,0, tzinfo=tz)),
-                          "1900-01-01 00:00:00+01:40")
+        tz = tzfile(BytesIO(base64.decodestring(self.EUROPE_HELSINKI)))
+        self.assertEqual(str(datetime(1900, 1, 1, 0, 0, tzinfo=tz)),
+                            "1900-01-01 00:00:00+01:40")
 
     def testLeapCountDecodesProperly(self):
         # This timezone has leapcnt, and failed to decode until
         # Eugene Oden notified about the issue.
-        tz = tzfile(StringIO(base64.decodestring(self.NEW_YORK)))
-        self.assertEquals(datetime(2007,3,31,20,12).tzname(), None)
+        tz = tzfile(BytesIO(base64.decodestring(self.NEW_YORK)))
+        self.assertEqual(datetime(2007, 3, 31, 20, 12).tzname(), None)
+
+    def testGettz(self):
+        # bug 892569
+        str(gettz('UTC'))
 
     def testBrokenIsDstHandling(self):
         # tzrange._isdst() was using a date() rather than a datetime().
         # Issue reported by Lennart Regebro.
-        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
-        self.assertEquals(dt.astimezone(tz=gettz("GMT+2")),
-                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
+        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tzutc())
+        self.assertEqual(dt.astimezone(tz=gettz("GMT+2")),
+                          datetime(2007, 8, 6, 6, 10, tzinfo=tzstr("GMT+2")))
 
     def testGMTHasNoDaylight(self):
         # tzstr("GMT+2") improperly considered daylight saving time.
         # Issue reported by Lennart Regebro.
-        dt = datetime(2007,8,6,4,10)
-        self.assertEquals(gettz("GMT+2").dst(dt), timedelta(0))
+        dt = datetime(2007, 8, 6, 4, 10)
+        self.assertEqual(gettz("GMT+2").dst(dt), timedelta(0))
 
     def testGMTOffset(self):
         # GMT and UTC offsets have inverted signal when compared to the
         # usual TZ variable handling.
-        dt = datetime(2007,8,6,4,10, tzinfo=tzutc())
-        self.assertEquals(dt.astimezone(tz=tzstr("GMT+2")),
-                          datetime(2007,8,6,6,10, tzinfo=tzstr("GMT+2")))
-        self.assertEquals(dt.astimezone(tz=gettz("UTC-2")),
-                          datetime(2007,8,6,2,10, tzinfo=tzstr("UTC-2")))
+        dt = datetime(2007, 8, 6, 4, 10, tzinfo=tzutc())
+        self.assertEqual(dt.astimezone(tz=tzstr("GMT+2")),
+                          datetime(2007, 8, 6, 6, 10, tzinfo=tzstr("GMT+2")))
+        self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
+                          datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
 
 if __name__ == "__main__":

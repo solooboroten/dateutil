@@ -18,18 +18,20 @@ VERSION = re.search('__version__ = "([^"]+)"',
 
 setup(name="python-dateutil",
       version = VERSION,
-      description = "Extensions to the standard python 2.3+ datetime module",
-      author = "Gustavo Niemeyer",
-      author_email = "gustavo@niemeyer.net",
+      description = "Extensions to the standard Python datetime module",
+      author = "Tomi Pievilaeinen",
+      author_email = "tomi.pievilainen@iki.fi",
       url = "http://labix.org/python-dateutil",
-      license = "PSF License",
+      license = "Simplified BSD",
       long_description =
 """\
-The dateutil module provides powerful extensions to the standard
-datetime module, available in Python 2.3+.
+The dateutil module provides powerful extensions to the 
+datetime module available in the Python standard library.
 """,
       packages = ["dateutil", "dateutil.zoneinfo"],
-      package_data={"": ["*.tar.gz"]},
-      include_package_data=True,
-      zip_safe=False,
+      package_data = {"": ["*.tar.gz"]},
+      include_package_data = True,
+      zip_safe = False,
+      requires = ["six"],
+      install_requires = ["six"], # XXX fix when packaging is sane again
       )

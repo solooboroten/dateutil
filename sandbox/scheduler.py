@@ -1,18 +1,19 @@
+# -*- coding: utf-8 -*-
 """
 Copyright (c) 2003-2005  Gustavo Niemeyer <gustavo@niemeyer.net>
 
-This module offers extensions to the standard python 2.3+
+This module offers extensions to the standard Python
 datetime module.
 """
-__author__ = "Gustavo Niemeyer <gustavo@niemeyer.net>"
-__license__ = "PSF License"
+__author__ = "Tomi Pieviläinen <tomi.pievilainen@iki.fi>"
+__license__ = "Simplified BSD"
 
 import datetime
-import thread
+import _thread
 import signal
 import time
 
-class sched:
+class sched(object):
 
     def __init__(self, rrule,
                  tolerance=None, last=None,
@@ -49,7 +50,7 @@ class sched:
         return item
 
 
-class schedset:
+class schedset(object):
     def __init__(self):
         self._scheds = []
 
@@ -76,7 +77,7 @@ class schedset:
         return res
 
 
-class schedthread:
+class schedthread(object):
     
     def __init__(self, sched, lock=None):
         self._sched = sched
@@ -88,7 +89,7 @@ class schedthread:
 
     def run(self):
         self._running = True
-        thread.start_new_thread(self._loop, ())
+        _thread.start_new_thread(self._loop, ())
         
     def stop(self):
         self._running = False
@@ -109,7 +110,7 @@ class schedthread:
                 time.sleep(seconds)
 
 
-class schedalarm:
+class schedalarm(object):
     
     def __init__(self, sched, lock=None):
         self._sched = sched
