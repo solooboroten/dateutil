@@ -80,7 +80,9 @@ The following files are available.
   * attachment:python-dateutil-1.0-1.noarch.rpm
 
 == Author ==
-The dateutil module was written by GustavoNiemeyer <gustavo@niemeyer.net>.
+The dateutil module was written by Gustavo Niemeyer <gustavo@niemeyer.net> and
+is currently maintained by Tomi Pieviläinen <tomi.pievilainen@iki.fi>. The latest
+code is available in [https://launchpad.net/dateutil Launchpad].
 
 == Documentation ==
 The following modules are available.
@@ -1204,6 +1206,10 @@ Additionally, the following keyword arguments are available:
     If {{{fuzzy}}} is set to True, unknown tokens in the string
     will be ignored.
 
+    fuzzy_with_tokens::
+    Similar to {{{fuzzy}}}, but will result a tuple of the normal
+    results and the skipped tokens.
+
     parserinfo::
     This parameter allows one to change how the string is parsed,
     by using a different parserinfo class instance. Using it you
@@ -1966,5 +1972,22 @@ Example:
 >>> zoneinfo.gettz("Brazil/East")
 tzfile('Brazil/East')
 }}}
+
+== Building ==
+When you get the source, it does not contain the internal zoneinfo
+database. To get (and update) the database, run the updatezinfo.py script. Make sure
+that the zic command is in your path, and that you have network connectivity
+to get the latest timezone information from IANA. If you have downloaded
+the timezone data earlier, you can give the tarball as a parameter to
+updatezinfo.py.
+
+
+== Testing ==
+dateutil has a comprehensive test suite, which can be run simply by running the
+test.py script in the project root. Note that if you don't have the internal
+zoneinfo database, some tests will fail. Apart from that, all tests should pass.
+
+To easily test dateutil against all supported Python versions, you can use
+[[[http://tox.readthedocs.org/en/latest/ tox]]].
 
 ## vim:ft=moin
