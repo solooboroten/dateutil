@@ -1,12 +1,13 @@
 Metadata-Version: 1.1
 Name: python-dateutil
-Version: 2.2
+Version: 2.3
 Summary: Extensions to the standard Python datetime module
-Home-page: http://labix.org/python-dateutil
-Author: Tomi Pievilaeinen
-Author-email: tomi.pievilainen@iki.fi
+Home-page: https://dateutil.readthedocs.org
+Author: Yaron de Leeuw
+Author-email: me@jarondl.net
 License: Simplified BSD
-Description: The dateutil module provides powerful extensions to the 
+Description: 
+        The dateutil module provides powerful extensions to the
         datetime module available in the Python standard library.
         
 Platform: UNKNOWN
@@ -20,5 +21,6 @@ Classifier: Programming Language :: Python :: 2.7
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.2
 Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
 Classifier: Topic :: Software Development :: Libraries
 Requires: six

@@ -1,23 +1,13 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from six import StringIO, BytesIO, PY3
 import unittest
 import calendar
 import base64
-import os
 
-# Add build directory to search path
-if os.path.exists("build"):
-    from distutils.util import get_platform
-    import sys
-    if sys.version_info >= (3, 2):
-        s = "build/lib"
-    else:
-        s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
-    s = os.path.join(os.getcwd(), s)
-    sys.path.insert(0, s)
+from datetime import *
+
+from six import StringIO, BytesIO, PY3
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -25,8 +15,6 @@ from dateutil.easter import *
 from dateutil.rrule import *
 from dateutil.tz import *
 from dateutil import zoneinfo
-
-from datetime import *
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -40,6 +28,7 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextMonthPlusOneWeek(self):
         self.assertEqual(self.now+relativedelta(months=+1, weeks=+1),
                          datetime(2003, 10, 24, 20, 54, 47, 282310))
+
     def testNextMonthPlusOneWeek10am(self):
         self.assertEqual(self.today +
                          relativedelta(months=+1, weeks=+1, hour=10),
@@ -95,7 +84,6 @@ class RelativeDeltaTest(unittest.TestCase):
     def testNextWednesdayIsToday(self):
         self.assertEqual(self.today+relativedelta(weekday=WE),
                          date(2003, 9, 17))
-
 
     def testNextWenesdayNotToday(self):
         self.assertEqual(self.today+relativedelta(days=+1, weekday=WE),
@@ -190,8 +178,8 @@ class RelativeDeltaTest(unittest.TestCase):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=28) / 28,
                          datetime(2000, 1, 2))
 
-class RRuleTest(unittest.TestCase):
 
+class RRuleTest(unittest.TestCase):
     def testYearly(self):
         self.assertEqual(list(rrule(YEARLY,
                               count=3,
@@ -562,7 +550,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 3, 2, 9, 0),
                           datetime(1999, 1, 2, 9, 0)])
 
-
     def testMonthlyByMonthDay(self):
         self.assertEqual(list(rrule(MONTHLY,
                               count=3,
@@ -701,7 +688,6 @@ class RRuleTest(unittest.TestCase):
                           datetime(1998, 7, 19, 9, 0),
                           datetime(1999, 4, 10, 9, 0),
                           datetime(1999, 7, 19, 9, 0)])
-
 
     def testMonthlyByWeekNo(self):
         self.assertEqual(list(rrule(MONTHLY,
@@ -2544,7 +2530,7 @@ class RRuleTest(unittest.TestCase):
 
     def testGetItemSlice(self):
         self.assertEqual(rrule(DAILY,
-                               #count=3,
+                               # count=3,
                                dtstart=parse("19970902T090000"))[1:2],
                          [datetime(1997, 9, 3, 9, 0)])
 
@@ -2578,10 +2564,8 @@ class RRuleTest(unittest.TestCase):
         self.assertEqual(datetime(1997, 9, 3, 9, 0) not in rr, False)
 
     def testBefore(self):
-        self.assertEqual(rrule(DAILY,
-                               #count=5,
-                               dtstart=parse("19970902T090000"))
-                               .before(parse("19970905T090000")),
+        self.assertEqual(rrule(DAILY,  # count=5
+            dtstart=parse("19970902T090000")).before(parse("19970905T090000")),
                          datetime(1997, 9, 4, 9, 0))
 
     def testBeforeInc(self):
@@ -3611,6 +3595,10 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("2004 10 Apr 11h30m", default=self.default),
                          datetime(2004, 4, 10, 11, 30))
 
+    def testErrorType01(self):
+        self.assertRaises(ValueError,
+                          parse,'shouldfail')
+
     def testIncreasingCTime(self):
         # This test will check 200 different years, every month, every day,
         # every hour, every minute, every second, and every weekday, using
@@ -4015,8 +4003,5 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 # vim:ts=4:sw=4
