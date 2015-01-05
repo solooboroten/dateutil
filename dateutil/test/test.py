@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import unittest
 import calendar
 import base64
-
-from datetime import *
+import sys
 
 from six import StringIO, BytesIO, PY3
+
+try:
+    # python2.6 unittest has no skipUnless. So we use unittest2.
+    # if you have python >= 2.7, you don't need unittest2, but it won't harm
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+MISSING_TARBALL = ("This test fails if you don't have the dateutil "
+                   "timezone file installed. Please read the README")
+
+from datetime import *
 
 from dateutil.relativedelta import *
 from dateutil.parser import *
@@ -15,6 +25,11 @@ from dateutil.easter import *
 from dateutil.rrule import *
 from dateutil.tz import *
 from dateutil import zoneinfo
+
+try:
+    from dateutil import tzwin
+except ImportError:
+    pass
 
 
 class RelativeDeltaTest(unittest.TestCase):
@@ -2429,6 +2444,69 @@ class RRuleTest(unittest.TestCase):
                              [datetime(1998, 1, 5, 9, 0),
                               datetime(2004, 1, 5, 9, 0)])
 
+    def testHourlyBadRRule(self):
+        """
+        When `byhour` is specified with `freq=HOURLY`, there are certain
+        combinations of `dtstart` and `byhour` which result in an rrule with no
+        valid values.
+
+        See https://github.com/dateutil/dateutil/issues/4
+        """
+
+        self.assertRaises(ValueError, rrule, HOURLY,
+                          **dict(interval=4, byhour=(7, 11, 15, 19),
+                                 dtstart=parse("19970902T090000")))
+
+    def testMinutelyBadRRule(self):
+        """
+        See :func:`testHourlyBadRRule` for details.
+        """
+
+        self.assertRaises(ValueError, rrule, MINUTELY,
+                          **dict(interval=12, byminute=(10, 11, 25, 39, 50),
+                                 dtstart=parse("19970902T090000")))
+
+    def testSecondlyBadRRule(self):
+        """
+        See :func:`testHourlyBadRRule` for details.
+        """
+
+        self.assertRaises(ValueError, rrule, SECONDLY,
+                          **dict(interval=10, bysecond=(2, 15, 37, 42, 59),
+                                 dtstart=parse("19970902T090000")))
+
+    def testMinutelyBadComboRRule(self):
+        """
+        Certain values of :param:`interval` in :class:`rrule`, when combined
+        with certain values of :param:`byhour` create rules which apply to no
+        valid dates. The library should detect this case in the iterator and
+        raise a :exception:`ValueError`.
+        """
+
+        # In Python 2.7 you can use a context manager for this.
+        def make_bad_rrule():
+            list(rrule(MINUTELY, interval=120, byhour=(10, 12, 14, 16),
+                 count=2, dtstart=parse("19970902T090000")))
+
+        self.assertRaises(ValueError, make_bad_rrule)
+
+    def testSecondlyBadComboRRule(self):
+        """
+        See :func:`testMinutelyBadComboRRule' for details.
+        """
+
+        # In Python 2.7 you can use a context manager for this.
+        def make_bad_minute_rrule():
+            list(rrule(SECONDLY, interval=360, byminute=(10, 28, 49),
+                 count=4, dtstart=parse("19970902T090000")))
+
+        def make_bad_hour_rrule():
+            list(rrule(SECONDLY, interval=43200, byhour=(2, 10, 18, 23),
+                 count=4, dtstart=parse("19970902T090000")))
+
+        self.assertRaises(ValueError, make_bad_minute_rrule)
+        self.assertRaises(ValueError, make_bad_hour_rrule)
+
     def testUntilNotMatching(self):
         self.assertEqual(list(rrule(DAILY,
                               count=3,
@@ -3442,16 +3520,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse(s, fuzzy=True),
                          datetime(2003, 9, 25, 10, 49, 41,
                                   tzinfo=self.brsttz))
+
     def testFuzzyWithTokens(self):
         s = "Today is 25 of September of 2003, exactly " \
             "at 10:49:41 with timezone -03:00."
         self.assertEqual(parse(s, fuzzy_with_tokens=True),
-                (datetime(2003, 9, 25, 10, 49, 41,
-                    tzinfo=self.brsttz),
-                    ('Today is ', 'of ', ', exactly at ',
-                        ' with timezone ', '.')
-                    )
-                )
+                         (datetime(2003, 9, 25, 10, 49, 41,
+                                   tzinfo=self.brsttz),
+                         ('Today is ', 'of ', ', exactly at ',
+                          ' with timezone ', '.')))
 
     def testExtraSpace(self):
         self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
@@ -3641,6 +3718,7 @@ class ParserTest(unittest.TestCase):
     def testCustomParserInfo(self):
         # Custom parser info wasn't working, as Michael Elsdörfer discovered.
         from dateutil.parser import parserinfo, parser
+
         class myparserinfo(parserinfo):
             MONTHS = parserinfo.MONTHS[:]
             MONTHS[0] = ("Foo", "Foo")
@@ -3651,7 +3729,7 @@ class ParserTest(unittest.TestCase):
 
 class EasterTest(unittest.TestCase):
     easterlist = [
-                 # WESTERN            ORTHODOX
+                  # WESTERN            ORTHODOX
                   (date(1990, 4, 15), date(1990, 4, 15)),
                   (date(1991, 3, 31), date(1991, 4,  7)),
                   (date(1992, 4, 19), date(1992, 4, 26)),
@@ -3931,23 +4009,28 @@ END:VTIMEZONE
 
     def testFileEnd1(self):
         tz = tzfile(BytesIO(base64.decodestring(self.TZFILE_EST5EDT)))
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
+                         "EDT")
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+                         "EST")
 
     def testZoneInfoFileStart1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 1, 59, tzinfo=tz).tzname(), "EST",
+                         MISSING_TARBALL)
         self.assertEqual(datetime(2003, 4, 6, 2, 00, tzinfo=tz).tzname(), "EDT")
 
     def testZoneInfoFileEnd1(self):
         tz = zoneinfo.gettz("EST5EDT")
-        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(), "EDT")
-        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(), "EST")
+        self.assertEqual(datetime(2003, 10, 26, 0, 59, tzinfo=tz).tzname(),
+                         "EDT", MISSING_TARBALL)
+        self.assertEqual(datetime(2003, 10, 26, 1, 00, tzinfo=tz).tzname(),
+                         "EST")
 
     def testZoneInfoOffsetSignal(self):
         utc = zoneinfo.gettz("UTC")
         nyc = zoneinfo.gettz("America/New_York")
-        self.assertNotEqual(utc, None)
+        self.assertNotEqual(utc, None, MISSING_TARBALL)
         self.assertNotEqual(nyc, None)
         t0 = datetime(2007, 11, 4, 0, 30, tzinfo=nyc)
         t1 = t0.astimezone(utc)
@@ -4003,5 +4086,10 @@ END:VTIMEZONE
         self.assertEqual(dt.astimezone(tz=gettz("UTC-2")),
                           datetime(2007, 8, 6, 2, 10, tzinfo=tzstr("UTC-2")))
 
+    @unittest.skipUnless(sys.platform.startswith("win"), "requires Windows")
+    def testIsdstZoneWithNoDaylightSaving(self):
+        tz = tzwin.tzwin("UTC")
+        dt = parse("2013-03-06 19:08:15")
+        self.assertFalse(tz._isdst(dt))
 
 # vim:ts=4:sw=4
