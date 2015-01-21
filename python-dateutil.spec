@@ -14,12 +14,22 @@ Patch0:         python-dateutil-system-zoneinfo.patch
 BuildArch:      noarch
 BuildRequires:  python2-devel
 BuildRequires:  python-setuptools
+BuildRequires:  python-sphinx
+BuildRequires:  python-six
 Requires:       tzdata
 Requires:       python-six
+
+# Use the same directory of the main package for subpackage licence and docs
+%global _docdir_fmt %{name}
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
 module available in Python 2.3+.
+
+%package doc
+Summary: API documentation for python-dateutil
+%description doc
+This package contains %{summary}.
 
 %prep
 %setup -q -n dateutil-%{version}
@@ -29,6 +39,7 @@ mv NEWS.new NEWS
 
 %build
 %{__python2} setup.py build
+make -C docs html
 
 %install
 %{__python2} setup.py install --skip-build --root $RPM_BUILD_ROOT
@@ -39,9 +50,14 @@ mv NEWS.new NEWS
 %{python2_sitelib}/dateutil/
 %{python2_sitelib}/*.egg-info
 
+%files doc
+%license LICENSE
+%doc docs/_build/html
+
 %changelog
 * Wed Jan 21 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.0-1
 - Change to new upstream, update to 2.4 (#1126521)
+- Build documentation.
 
 * Tue Aug 05 2014 Jon Ciesla <limburgher@gmail.com> - 1:1.5-9
 - Reverting to 1.5 pre user feedback and upstream.
