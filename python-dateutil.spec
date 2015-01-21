@@ -44,6 +44,9 @@ make -C docs html
 %install
 %{__python2} setup.py install --skip-build --root $RPM_BUILD_ROOT
 
+%check
+%{__python2} setup.py test
+
 %files
 %license LICENSE
 %doc NEWS README.rst
