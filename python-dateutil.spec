@@ -18,6 +18,7 @@ BuildRequires:  python-sphinx
 BuildRequires:  python-six
 Requires:       tzdata
 Requires:       python-six
+Conflicts:      python-vobject <= 0.8.1c-10
 
 # Use the same directory of the main package for subpackage licence and docs
 %global _docdir_fmt %{name}
@@ -84,6 +85,8 @@ make -C docs html
 %changelog
 * Wed Jan 21 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.0-2
 - Add python3 subpackage.
+- Conflict with python-vobject <= 0.8.1c-10 (workaround until #1183377
+  is fixed one way or another).
 
 * Wed Jan 21 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.0-1
 - Change to new upstream, update to 2.4 (#1126521)
