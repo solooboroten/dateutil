@@ -3543,6 +3543,21 @@ class ParserTest(unittest.TestCase):
                          ('Today is ', 'of ', ', exactly at ',
                           ' with timezone ', '.')))
 
+    def testFuzzyAMPMProblem(self):
+        # Sometimes fuzzy parsing results in AM/PM flag being set without
+        # hours - if it's fuzzy it should ignore that.
+        s1 = "I have a meeting on March 1, 1974."
+        s2 = "On June 8th, 2020, I am going to be the first man on Mars"
+
+        # Also don't want any erroneous AM or PMs changing the parsed time
+        s3 = "Meet me at the AM/PM on Sunset at 3:00 AM on December 3rd, 2003"
+        s4 = "Meet me at 3:00AM on December 3rd, 2003 at the AM/PM on Sunset"
+
+        self.assertEqual(parse(s1, fuzzy=True), datetime(1974, 3, 1))
+        self.assertEqual(parse(s2, fuzzy=True), datetime(2020, 6, 8))
+        self.assertEqual(parse(s3, fuzzy=True), datetime(2003, 12, 3, 3))
+        self.assertEqual(parse(s4, fuzzy=True), datetime(2003, 12, 3, 3))
+
     def testExtraSpace(self):
         self.assertEqual(parse("  July   4 ,  1976   12:01:02   am  "),
                          datetime(1976, 7, 4, 0, 1, 2))
@@ -3992,6 +4007,14 @@ END:VTIMEZONE
                                   tzinfo=tzstr(s)).tzname(), "EDT")
         self.assertEqual(datetime(2003, 10, 26, 1, 00,
                                   tzinfo=tzstr(s)).tzname(), "EST")
+
+    def testStrStr(self):
+        # Test that tzstr() won't throw an error if given a str instead
+        # of a unicode literal.
+        self.assertEqual(datetime(2003, 4, 6, 1, 59,
+                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EST")
+        self.assertEqual(datetime(2003, 4, 6, 2, 00,
+                                  tzinfo=tzstr(str("EST5EDT"))).tzname(), "EDT")
 
     def testStrCmp1(self):
         self.assertEqual(tzstr("EST5EDT"),
