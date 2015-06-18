@@ -1,6 +1,6 @@
 Name:           python-dateutil
 Version:        2.4.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -83,6 +83,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.4.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
 * Mon Apr  6 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.2-1
 - Update to latest upstream release.
 
