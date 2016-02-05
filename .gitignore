@@ -1,4 +1,7 @@
-python-dateutil-1.4.1.tar.gz
+/noarch/
+/.build-*.fc*.log
+/python-dateutil-*.fc*.src.rpm
+/python-dateutil-1.4.1.tar.gz
 /python-dateutil-1.5.tar.gz
 /python-dateutil-2.2.tar.gz
 /2.4.0.tar.gz
