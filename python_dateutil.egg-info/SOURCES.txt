@@ -12,7 +12,16 @@ dateutil/parser.py
 dateutil/relativedelta.py
 dateutil/rrule.py
 dateutil/tzwin.py
+dateutil/test/__init__.py
+dateutil/test/_common.py
+dateutil/test/test_easter.py
+dateutil/test/test_imports.py
+dateutil/test/test_parser.py
+dateutil/test/test_relativedelta.py
+dateutil/test/test_rrule.py
+dateutil/test/test_tz.py
 dateutil/tz/__init__.py
+dateutil/tz/_common.py
 dateutil/tz/tz.py
 dateutil/tz/win.py
 dateutil/zoneinfo/__init__.py
