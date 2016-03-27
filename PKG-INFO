@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: python-dateutil
-Version: 2.5.1
+Version: 2.5.2
 Summary: Extensions to the standard Python datetime module
 Home-page: https://dateutil.readthedocs.org
 Author: Paul Ganssle, Yaron de Leeuw
