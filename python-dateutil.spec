@@ -10,9 +10,12 @@ Group:          Development/Languages
 License:        Python
 URL:            https://github.com/dateutil/dateutil
 Source0:        https://github.com/dateutil/dateutil/releases/download/%{version}/python-dateutil-%{version}.tar.xz
+Source1:        https://github.com/dateutil/dateutil/releases/download/%{version}/python-dateutil-%{version}.tar.xz.asc
+Source2:        key-D964BEFB.gpg
 
 BuildArch:      noarch
 BuildRequires:  python-sphinx
+BuildRequires:  gnupg2
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -56,6 +59,7 @@ Summary: API documentation for python-dateutil
 This package contains %{summary}.
 
 %prep
+gpgv2 --homedir . --keyring %{SOURCE2} %{SOURCE1} %{SOURCE0}
 %autosetup -p0
 iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
