@@ -1,15 +1,15 @@
 %global modname dateutil
 
 Name:           python-%{modname}
-Version:        2.5.2
-Release:        2%{?dist}
+Version:        2.5.3
+Release:        1%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            https://github.com/dateutil/dateutil
-Source0:        https://github.com/dateutil/dateutil/archive/%{version}/%{modname}-%{version}.tar.gz
+Source0:        https://github.com/dateutil/dateutil/releases/download/%{version}/python-dateutil-%{version}.tar.xz
 
 BuildArch:      noarch
 BuildRequires:  python-sphinx
@@ -56,7 +56,7 @@ Summary: API documentation for python-dateutil
 This package contains %{summary}.
 
 %prep
-%autosetup -p0 -n %{modname}-%{version}
+%autosetup -p0
 iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
 
@@ -90,6 +90,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Thu May  5 2016 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.5.3-1
+- Update to latest version (#1318828)
+
 * Thu May  5 2016 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.5.2-2
 - Use separate dirs for docs for py2 and py3 subpackages (#1332623)
 
