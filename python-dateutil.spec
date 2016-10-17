@@ -2,7 +2,7 @@
 
 Name:           python-dateutil
 Version:        1.4.1
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -19,7 +19,8 @@ Patch0:         python-dateutil-1.4.1-remove-embedded-timezone-data.patch
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
 
-Requires:       tzdata
+Requires:		tzdata
+Requires:		python-six
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -59,6 +60,10 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Mon Oct 17 2016 Charalampos Stratakis <cstratak@redhat.com> - 1.4.1-7
+- Add runtime requirement for python-six
+Resolves: rhbz#1381756
+
 * Tue Jul 13 2010 David Malcolm <dmalcolm@redhat.com> - 1.4.1-6
 - remove embedded copy of timezone data, and redirect the dateutil.zoneinfo
 API accordingly
