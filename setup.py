@@ -22,7 +22,7 @@ setup(name="python-dateutil",
       description="Extensions to the standard Python datetime module",
       author="Paul Ganssle, Yaron de Leeuw",
       author_email="dateutil@python.org",
-      url="https://dateutil.readthedocs.org",
+      url="https://dateutil.readthedocs.io",
       license="Simplified BSD",
       long_description="""
 The dateutil module provides powerful extensions to the
@@ -46,6 +46,7 @@ datetime module available in the Python standard library.
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
           'Topic :: Software Development :: Libraries',
       ],
       test_suite="dateutil.test"

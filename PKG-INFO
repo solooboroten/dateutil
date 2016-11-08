@@ -1,8 +1,8 @@
 Metadata-Version: 1.1
 Name: python-dateutil
-Version: 2.5.3
+Version: 2.6.0
 Summary: Extensions to the standard Python datetime module
-Home-page: https://dateutil.readthedocs.org
+Home-page: https://dateutil.readthedocs.io
 Author: Paul Ganssle, Yaron de Leeuw
 Author-email: dateutil@python.org
 License: Simplified BSD
@@ -23,5 +23,6 @@ Classifier: Programming Language :: Python :: 3.2
 Classifier: Programming Language :: Python :: 3.3
 Classifier: Programming Language :: Python :: 3.4
 Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
 Classifier: Topic :: Software Development :: Libraries
 Requires: six
