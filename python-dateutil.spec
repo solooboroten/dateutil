@@ -2,7 +2,7 @@
 
 Name:           python-%{modname}
 Version:        2.6.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -90,6 +90,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Fri Dec 09 2016 Charalampos Stratakis <cstratak@redhat.com> - 2.6.0-2
+- Rebuild for Python 3.6
+
 * Wed Nov 09 2016 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 2.6.0-1
 - Update to 2.6.0 (RHBZ #1393159)
 
