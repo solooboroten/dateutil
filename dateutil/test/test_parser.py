@@ -2,14 +2,14 @@
 from __future__ import unicode_literals
 from ._common import unittest
 
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from dateutil.tz import tzoffset
-from dateutil.parser import *
+from dateutil.parser import parse, parserinfo
 
-import six
 from six import assertRaisesRegex, PY3
 from six.moves import StringIO
+
 
 class ParserTest(unittest.TestCase):
 
@@ -19,14 +19,8 @@ class ParserTest(unittest.TestCase):
         self.default = datetime(2003, 9, 25)
 
         # Parser should be able to handle bytestring and unicode
-        base_str = '2014-05-01 08:00:00'
-        try:
-            # Python 2.x
-            self.uni_str = unicode(base_str)
-            self.str_str = str(base_str)
-        except NameError:
-            self.uni_str = str(base_str)
-            self.str_str = bytes(base_str.encode())
+        self.uni_str = '2014-05-01 08:00:00'
+        self.str_str = self.uni_str.encode()
 
     def testEmptyString(self):
         with self.assertRaises(ValueError):
@@ -50,7 +44,6 @@ class ParserTest(unittest.TestCase):
 
             def read(self, *args, **kwargs):
                 return self.stream.read(*args, **kwargs)
-
 
         dstr = StringPassThrough(StringIO('2014 January 19'))
 
@@ -112,7 +105,6 @@ class ParserTest(unittest.TestCase):
                          datetime(2003, 9, 25, 10, 36, 28,
                                   tzinfo=self.brsttz))
 
-
     def testDateCommandFormatReversed(self):
         self.assertEqual(parse("2003 10:36:28 BRST 25 Sep Thu",
                                tzinfos=self.tzinfos),
@@ -125,6 +117,7 @@ class ParserTest(unittest.TestCase):
                                    tzinfos={"BRST": long(-10800)}),
                              datetime(2003, 9, 25, 10, 36, 28,
                                       tzinfo=self.brsttz))
+
     def testDateCommandFormatIgnoreTz(self):
         self.assertEqual(parse("Thu Sep 25 10:36:28 BRST 2003",
                                ignoretz=True),
@@ -459,6 +452,26 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("10 h 36", default=self.default),
                          datetime(2003, 9, 25, 10, 36))
 
+    def testHourWithLetterStrip5(self):
+        self.assertEqual(parse("10 h 36.5", default=self.default),
+                         datetime(2003, 9, 25, 10, 36, 30))
+
+    def testMinuteWithLettersSpaces1(self):
+        self.assertEqual(parse("36 m 5", default=self.default),
+                         datetime(2003, 9, 25, 0, 36, 5))
+
+    def testMinuteWithLettersSpaces2(self):
+        self.assertEqual(parse("36 m 5 s", default=self.default),
+                         datetime(2003, 9, 25, 0, 36, 5))
+
+    def testMinuteWithLettersSpaces3(self):
+        self.assertEqual(parse("36 m 05", default=self.default),
+                         datetime(2003, 9, 25, 0, 36, 5))
+
+    def testMinuteWithLettersSpaces4(self):
+        self.assertEqual(parse("36 m 05 s", default=self.default),
+                         datetime(2003, 9, 25, 0, 36, 5))
+
     def testAMPMNoHour(self):
         with self.assertRaises(ValueError):
             parse("AM")
@@ -551,13 +564,18 @@ class ParserTest(unittest.TestCase):
                                   tzinfo=self.brsttz))
 
     def testFuzzyWithTokens(self):
-        s = "Today is 25 of September of 2003, exactly " \
+        s1 = "Today is 25 of September of 2003, exactly " \
             "at 10:49:41 with timezone -03:00."
-        self.assertEqual(parse(s, fuzzy_with_tokens=True),
+        self.assertEqual(parse(s1, fuzzy_with_tokens=True),
                          (datetime(2003, 9, 25, 10, 49, 41,
                                    tzinfo=self.brsttz),
                          ('Today is ', 'of ', ', exactly at ',
                           ' with timezone ', '.')))
+
+        s2 = "http://biz.yahoo.com/ipo/p/600221.html"
+        self.assertEqual(parse(s2, fuzzy_with_tokens=True),
+                         (datetime(2060, 2, 21, 0, 0, 0),
+                         ('http://biz.yahoo.com/ipo/p/', '.html')))
 
     def testFuzzyAMPMProblem(self):
         # Sometimes fuzzy parsing results in AM/PM flag being set without
@@ -738,11 +756,11 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(parse("April 2009", default=datetime(2010, 1, 31)),
                          datetime(2009, 4, 30))
 
-    def testUnspecifiedDayFallbackFebNoLeapYear(self):        
+    def testUnspecifiedDayFallbackFebNoLeapYear(self):
         self.assertEqual(parse("Feb 2007", default=datetime(2010, 1, 31)),
                          datetime(2007, 2, 28))
 
-    def testUnspecifiedDayFallbackFebLeapYear(self):        
+    def testUnspecifiedDayFallbackFebLeapYear(self):
         self.assertEqual(parse("Feb 2008", default=datetime(2010, 1, 31)),
                          datetime(2008, 2, 29))
 
@@ -808,6 +826,25 @@ class ParserTest(unittest.TestCase):
         dt = myparser.parse("01/Foo/2007")
         self.assertEqual(dt, datetime(2007, 1, 1))
 
+    def testCustomParserShortDaynames(self):
+        # Horacio Hoyos discovered that day names shorter than 3 characters,
+        # for example two letter German day name abbreviations, don't work:
+        # https://github.com/dateutil/dateutil/issues/343
+        from dateutil.parser import parserinfo, parser
+
+        class GermanParserInfo(parserinfo):
+            WEEKDAYS = [("Mo", "Montag"),
+                        ("Di", "Dienstag"),
+                        ("Mi", "Mittwoch"),
+                        ("Do", "Donnerstag"),
+                        ("Fr", "Freitag"),
+                        ("Sa", "Samstag"),
+                        ("So", "Sonntag")]
+
+        myparser = parser(GermanParserInfo())
+        dt = myparser.parse("Sa 21. Jan 2017")
+        self.assertEqual(dt, datetime(2017, 1, 21))
+
     def testNoYearFirstNoDayFirst(self):
         dtstr = '090107'
 
@@ -851,11 +888,10 @@ class ParserTest(unittest.TestCase):
 
     def testUnambiguousDayFirst(self):
         dtstr = '2015 09 25'
-        self.assertEqual(parse(dtstr, dayfirst=True), 
+        self.assertEqual(parse(dtstr, dayfirst=True),
                          datetime(2015, 9, 25))
 
     def testUnambiguousDayFirstYearFirst(self):
         dtstr = '2015 09 25'
         self.assertEqual(parse(dtstr, dayfirst=True, yearfirst=True),
                          datetime(2015, 9, 25))
-

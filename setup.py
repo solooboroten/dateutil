@@ -6,21 +6,15 @@ import re
 
 from setuptools import setup
 
+from dateutil._version import VERSION
 
 if isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
-
-TOPDIR = os.path.dirname(__file__) or "."
-VERSION = re.search('__version__ = "([^"]+)"',
-                    codecs.open(TOPDIR + "/dateutil/__init__.py",
-                                encoding='utf-8').read()).group(1)
-
-
 setup(name="python-dateutil",
       version=VERSION,
       description="Extensions to the standard Python datetime module",
-      author="Paul Ganssle, Yaron de Leeuw",
+      author="Paul Ganssle",
       author_email="dateutil@python.org",
       url="https://dateutil.readthedocs.io",
       license="Simplified BSD",

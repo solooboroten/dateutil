@@ -5,7 +5,7 @@ from ._common import unittest, WarningTestMixin, NotAValue
 import calendar
 from datetime import datetime, date, timedelta
 
-from dateutil.relativedelta import *
+from dateutil.relativedelta import relativedelta, MO, TU, WE, FR, SU
 
 
 class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
@@ -179,6 +179,12 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
                                        minutes=5, microseconds=6),
                          relativedelta(years=1, months=2, days=13, hours=4,
                                        minutes=5, microseconds=6))
+
+    def testAbsoluteAddition(self):
+        self.assertEqual(relativedelta() + relativedelta(day=0, hour=0),
+                         relativedelta(day=0, hour=0))
+        self.assertEqual(relativedelta(day=0, hour=0) + relativedelta(),
+                         relativedelta(day=0, hour=0))
 
     def testAdditionToDatetime(self):
         self.assertEqual(datetime(2000, 1, 1) + relativedelta(days=1),
@@ -416,7 +422,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(rd2.normalized(),
             relativedelta(days=1, hours=11, minutes=31, seconds=12))
 
-    def testRelativeDeltaNormalizeFractionalDays(self):
+    def testRelativeDeltaNormalizeFractionalDays2(self):
         # Equivalent to (hours=1, minutes=30)
         rd1 = relativedelta(hours=1.5)
 
@@ -447,7 +453,7 @@ class RelativeDeltaTest(WarningTestMixin, unittest.TestCase):
         self.assertEqual(rd1.normalized(),
             relativedelta(seconds=45, microseconds=25000))
 
-    def testRelativeDeltaFractionalPositiveOverflow(self):
+    def testRelativeDeltaFractionalPositiveOverflow2(self):
         # Equivalent to (days=1, hours=14)
         rd1 = relativedelta(days=1.5, hours=2)
         self.assertEqual(rd1.normalized(),

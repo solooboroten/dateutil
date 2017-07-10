@@ -5,6 +5,17 @@ try:
 except ImportError:
     import unittest
 
+class ImportVersionTest(unittest.TestCase):
+    """ Test that dateutil.__version__ can be imported"""
+
+    def testImportVersionStr(self):
+        from dateutil import __version__
+
+    def testImportRoot(self):
+        import dateutil
+
+        self.assertTrue(hasattr(dateutil, '__version__'))
+
 
 class ImportEasterTest(unittest.TestCase):
     """ Test that dateutil.easter-related imports work properly """
@@ -128,7 +139,13 @@ class ImportTZWinTest(unittest.TestCase):
         from dateutil import tzwin
 
     def testTzwinStar(self):
-        tzwin_all = ["tzwin", "tzwinlocal"]
+        from dateutil.tzwin import tzwin
+        from dateutil.tzwin import tzwinlocal
+
+        tzwin_all = [tzwin, tzwinlocal]
+
+        for var in tzwin_all:
+            self.assertIsNot(var, None)
 
 
 class ImportZoneInfoTest(unittest.TestCase):
