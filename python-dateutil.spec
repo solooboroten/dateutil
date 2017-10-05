@@ -1,15 +1,14 @@
 %{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 
 Name:           python-dateutil
-Version:        1.0
+Version:        1.1
 Release:        1%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python Software Foundation License
-URL:            https://moin.conectiva.com.br/DateUtil
-#Source0:        https://moin.conectiva.com.br/DateUtil?action=AttachFile&do=get&target=python-dateutil-%{version}.tar.bz2
-Source0:        python-dateutil-%{version}.tar.bz2
+URL:            http://labix.org/python-dateutil
+Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.bz2
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
@@ -42,6 +41,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/dateutil/
 
 %changelog
+* Thu Dec 22 2005 Orion Poplawski <orion@cora.nwra.com> 1.1-1
+- Update to 1.1
+
 * Thu Jul 28 2005 Orion Poplawski <orion@cora.nwra.com> 1.0-1
 - Update to 1.0
 
