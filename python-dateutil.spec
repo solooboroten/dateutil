@@ -2,7 +2,7 @@
 
 Name:           python-dateutil
 Version:        1.1
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -13,7 +13,7 @@ Patch0:         python-dateutil-1.1-x86_64.patch
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
-BuildRequires:  python
+BuildRequires:  python-devel
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -43,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/dateutil/
 
 %changelog
+* Mon Dec 11 2006 Jef Spaleta <jspaleta@gmail.com> 1.1-5
+- Fix python-devel BR, as per discussion in maintainers-list
+
 * Mon Dec 11 2006 Jef Spaleta <jspaleta@gmail.com> 1.1-4
 - Release bump for rebuild against python 2.5 in devel tree
 
