@@ -4,7 +4,7 @@
 
 Name:           python-dateutil
 Version:        1.4.1
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 1.4.1-5
 - Rebuilt for https://fedoraproject.org/wiki/Features/Python_2.7/MassRebuild
 
