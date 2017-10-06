@@ -1,2 +1,2 @@
 copy: *.patch
-tar.gz: fedoraproject/src/@name@:. base=@name@-@version@
+tar.gz: fedoraproject/src/@name@:. name=@version@ base=dateutil-@version@
