@@ -1,51 +1,55 @@
-%if 0%{?fedora} < 13 && 0%{?rhel} < 6
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
-%endif
-
 Name:           python-dateutil
-Version:        1.4.1
-Release:        5%{?dist}
+Version:        1.5
+Release:        3%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            http://labix.org/python-dateutil
-Source0:        http://labix.org/download/python-dateutil/python-dateutil-%{version}.tar.gz
-BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source0:        http://labix.org/download/%{name}/%{name}-%{version}.tar.gz
+Patch0:		python-dateutil-1.5-system-zoneinfo.patch
 
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
-
+Requires:	tzdata
 %description
 The dateutil module provides powerful extensions to the standard datetime
 module available in Python 2.3+.
 
 %prep
 %setup -q
+%patch0 -p1
 
-# Reencode this as utf8
-iconv -f ISO-8859-1 -t utf8 NEWS
+iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
+mv NEWS.new NEWS
 
 %build
 %{__python} setup.py build
 
-
 %install
-rm -rf $RPM_BUILD_ROOT
 %{__python} setup.py install --skip-build --root $RPM_BUILD_ROOT
 
- 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
-
 %files
-%defattr(-,root,root,-)
 %doc example.py LICENSE NEWS README
 %{python_sitelib}/dateutil/
+%exclude %{python_sitelib}/dateutil/zoneinfo/zoneinfo-2010g.tar.gz
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-3
+- Adjust patch to respect systemwide tzdata. Ref bug 729786
+
+* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-2
+- Added a patch to respect systemwide tzdata. Ref bug 729786
+
+* Wed Jul 13 2011 Rahul Sundaram <sundaram@fedoraproject.org> - 1.5-1
+- New upstream release
+- Fix UTF8 encoding correctly
+- Drop buildroot, clean, defattr and use macro for Source
+
+* Tue Feb 08 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Thu Jul 22 2010 David Malcolm <dmalcolm@redhat.com> - 1.4.1-5
 - Rebuilt for https://fedoraproject.org/wiki/Features/Python_2.7/MassRebuild
 
