@@ -1,13 +1,13 @@
 Name:           python-dateutil
-Version:        1.5
-Release:        8%{?dist}
+Version:        2.2
+Release:        1%{?dist}
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/%{name}/%{name}-%{version}.tar.gz
-Patch0:		python-dateutil-1.5-system-zoneinfo.patch
+Patch0:		python-dateutil-2.0-system-zoneinfo.patch
 
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
@@ -36,6 +36,10 @@ mv NEWS.new NEWS
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Mon Aug 04 2014 Jon Ciesla <limburgher@gmail.com> - 2.2-1
+- Update to 2.2, BZ 1126521.
+- Fix bad dates.
+
 * Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
@@ -51,10 +55,10 @@ mv NEWS.new NEWS
 * Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.5-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
 
-* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-3
+* Thu Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-3
 - Adjust patch to respect systemwide tzdata. Ref bug 729786
 
-* Wed Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-2
+* Thu Sep 15 2011 Jef Spaleta <jspaleta@fedoraproject.org> - 1.5-2
 - Added a patch to respect systemwide tzdata. Ref bug 729786
 
 * Wed Jul 13 2011 Rahul Sundaram <sundaram@fedoraproject.org> - 1.5-1
