@@ -1,13 +1,14 @@
 Name:           python-dateutil
-Version:        2.2
-Release:        1%{?dist}
+Version:        1.5
+Release:        0%{?dist}
+Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            http://labix.org/python-dateutil
 Source0:        http://labix.org/download/%{name}/%{name}-%{version}.tar.gz
-Patch0:		python-dateutil-2.0-system-zoneinfo.patch
+Patch0:		python-dateutil-1.5-system-zoneinfo.patch
 
 BuildArch:      noarch
 BuildRequires:  python-devel,python-setuptools
@@ -36,6 +37,9 @@ mv NEWS.new NEWS
 %{python_sitelib}/*.egg-info
 
 %changelog
+* Tue Aug 05 2014 Jon Ciesla <limburgher@gmail.com> - 1:1.5-9
+- Reverting to 1.5 pre user feedback and upstream.
+
 * Mon Aug 04 2014 Jon Ciesla <limburgher@gmail.com> - 2.2-1
 - Update to 2.2, BZ 1126521.
 - Fix bad dates.
