@@ -1,1 +1,1 @@
-tar.bz2: fedoraproject/src/@name@:. base=@name@-@version@
+tar.gz: fedoraproject/src/@name@:. base=@name@-@version@
