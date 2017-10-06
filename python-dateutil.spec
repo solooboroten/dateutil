@@ -1,6 +1,6 @@
 Name:           python-dateutil
 Version:        2.4.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -10,6 +10,7 @@ URL:            https://github.com/dateutil/dateutil
 Source0:        https://github.com/dateutil/dateutil/archive/2.4.0.tar.gz
 # https://github.com/dateutil/dateutil/issues/11
 Patch0:         python-dateutil-system-zoneinfo.patch
+Patch1:         python-dateutil-timelex-string.patch
 
 BuildArch:      noarch
 BuildRequires:  python2-devel
@@ -48,8 +49,7 @@ Summary: API documentation for python-dateutil
 This package contains %{summary}.
 
 %prep
-%setup -q -n dateutil-%{version}
-%patch0 -p0
+%autosetup -p0 -n dateutil-%{version}
 iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
 
@@ -83,6 +83,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Tue Mar  3 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.0-3
+- Add patch for string handling in dateutil.tz.tzstr (#1197791)
+
 * Wed Jan 21 2015 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.4.0-2
 - Add python3 subpackage.
 - Conflict with python-vobject <= 0.8.1c-10 (workaround until #1183377
