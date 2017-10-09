@@ -1,5 +1,7 @@
-Name:           python-dateutil
-Version:        2.5.0
+%global modname dateutil
+
+Name:           python-%{modname}
+Version:        2.5.2
 Release:        1%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
@@ -7,16 +9,10 @@ Summary:        Powerful extensions to the standard datetime module
 Group:          Development/Languages
 License:        Python
 URL:            https://github.com/dateutil/dateutil
-Source0:        https://github.com/dateutil/dateutil/archive/%{version}.tar.gz#/python-dateutil-%{version}.tar.gz
+Source0:        https://github.com/dateutil/dateutil/archive/%{version}/%{modname}-%{version}.tar.gz
 
 BuildArch:      noarch
-BuildRequires:  python2-devel
-BuildRequires:  python-setuptools
 BuildRequires:  python-sphinx
-BuildRequires:  python-six
-Requires:       tzdata
-Requires:       python-six
-Conflicts:      python-vobject <= 0.8.1c-10
 
 # Use the same directory of the main package for subpackage licence and docs
 %global _docdir_fmt %{name}
@@ -27,8 +23,24 @@ module available in Python 2.3+.
 
 This is the version for Python 2.
 
-%package -n python3-dateutil
+%package -n python2-%{modname}
 Summary:        Powerful extensions to the standard datetime module
+%{?python_provide:%python_provide python2-%{modname}}
+BuildRequires:  python2-devel
+BuildRequires:  python2-six
+BuildRequires:  python2-setuptools
+Requires:       tzdata
+Requires:       python2-six
+
+%description -n python2-%{modname}
+The dateutil module provides powerful extensions to the standard datetime
+module available in Python 2.3+.
+
+This is the version for Python 2.
+
+%package -n python3-%{modname}
+Summary:        Powerful extensions to the standard datetime module
+%{?python_provide:%python_provide python3-%{modname}}
 BuildRequires:  python3-devel
 BuildRequires:  python3-six
 BuildRequires:  python3-setuptools
@@ -47,7 +59,7 @@ Summary: API documentation for python-dateutil
 This package contains %{summary}.
 
 %prep
-%autosetup -p0 -n dateutil-%{version}
+%autosetup -p0 -n %{modname}-%{version}
 iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
 
@@ -64,16 +76,16 @@ make -C docs html
 %{__python2} setup.py test
 %{__python3} setup.py test
 
-%files
+%files -n python2-%{modname}
 %license LICENSE
 %doc NEWS README.rst
-%{python2_sitelib}/dateutil/
+%{python2_sitelib}/%{modname}/
 %{python2_sitelib}/*.egg-info
 
-%files -n python3-dateutil
+%files -n python3-%{modname}
 %license LICENSE
 %doc NEWS README.rst
-%{python3_sitelib}/dateutil/
+%{python3_sitelib}/%{modname}/
 %{python3_sitelib}/*.egg-info
 
 %files doc
@@ -81,6 +93,10 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Sat Apr 09 2016 Igor Gnatenko <ignatenko@redhat.com> - 1:2.5.2-1
+- Update to 2.5.2
+- Adopt for new packaging guidelines
+
 * Mon Feb 29 2016 Zbigniew Jędrzejewski-Szmek <zbyszek@bupkis> - 1:2.5.0-1
 - Update to latest upstream version
 - The patch to make dateutil.zoneinfo.gettz() use the system database is dropped.
