@@ -1,16 +1,13 @@
 Name:           python-dateutil
-Version:        2.4.2
-Release:        4%{?dist}
+Version:        2.5.0
+Release:        1%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
 Group:          Development/Languages
 License:        Python
 URL:            https://github.com/dateutil/dateutil
-Source0:        https://github.com/dateutil/dateutil/archive/%{version}.tar.gz
-# https://github.com/dateutil/dateutil/issues/11
-Patch0:         python-dateutil-system-zoneinfo.patch
-Patch1:         python-dateutil-timelex-string.patch
+Source0:        https://github.com/dateutil/dateutil/archive/%{version}.tar.gz#/python-dateutil-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python2-devel
@@ -55,13 +52,13 @@ iconv --from=ISO-8859-1 --to=UTF-8 NEWS > NEWS.new
 mv NEWS.new NEWS
 
 %build
-%{__python2} setup.py build
-%{__python3} setup.py build
+%py2_build
+%py3_build
 make -C docs html
 
 %install
-%{__python2} setup.py install --skip-build --root $RPM_BUILD_ROOT
-%{__python3} setup.py install --skip-build --root $RPM_BUILD_ROOT
+%py2_install
+%py3_install
 
 %check
 %{__python2} setup.py test
@@ -84,6 +81,11 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Mon Feb 29 2016 Zbigniew Jędrzejewski-Szmek <zbyszek@bupkis> - 1:2.5.0-1
+- Update to latest upstream version
+- The patch to make dateutil.zoneinfo.gettz() use the system database is dropped.
+  Upstream recommends using dateutil.tz.gettz() instead.
+
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.4.2-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
