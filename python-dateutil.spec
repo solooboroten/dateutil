@@ -2,7 +2,7 @@
 
 Name:           python-%{modname}
 Version:        2.5.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -13,9 +13,6 @@ Source0:        https://github.com/dateutil/dateutil/archive/%{version}/%{modnam
 
 BuildArch:      noarch
 BuildRequires:  python-sphinx
-
-# Use the same directory of the main package for subpackage licence and docs
-%global _docdir_fmt %{name}
 
 %description
 The dateutil module provides powerful extensions to the standard datetime
@@ -93,6 +90,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Thu May  5 2016 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 1:2.5.2-2
+- Use separate dirs for docs for py2 and py3 subpackages (#1332623)
+
 * Sat Apr 09 2016 Igor Gnatenko <ignatenko@redhat.com> - 1:2.5.2-1
 - Update to 2.5.2
 - Adopt for new packaging guidelines
