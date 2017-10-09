@@ -1,1 +1,1 @@
-tar.gz: fedoraproject/src/@name@:. base=dateutil-@version@
+tar.gz: fedoraproject/src/@name@:. name=dateutil-@version@ base=dateutil-@version@
