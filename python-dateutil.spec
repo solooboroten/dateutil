@@ -1,8 +1,8 @@
 %global modname dateutil
 
 Name:           python-%{modname}
-Version:        2.5.3
-Release:        2%{?dist}
+Version:        2.6.0
+Release:        1%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -90,6 +90,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Wed Nov 09 2016 Igor Gnatenko <i.gnatenko.brain@gmail.com> - 2.6.0-1
+- Update to 2.6.0 (RHBZ #1393159)
+
 * Tue Jul 19 2016 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:2.5.3-2
 - https://fedoraproject.org/wiki/Changes/Automatic_Provides_for_Python_RPM_Packages
 
