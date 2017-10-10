@@ -2,7 +2,7 @@
 
 Name:           python-%{modname}
 Version:        2.6.0
-Release:        3%{?dist}
+Release:        4%{?dist}
 Epoch:          1
 Summary:        Powerful extensions to the standard datetime module
 
@@ -90,6 +90,9 @@ make -C docs html
 %doc docs/_build/html
 
 %changelog
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.6.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:2.6.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 
